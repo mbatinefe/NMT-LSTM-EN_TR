@@ -411,7 +411,7 @@ def test_translator(translator_to_test, Encoder, Decoder):
 
         cases = []
 
-        vocab_size = 10000
+        vocab_size = 12000
         n_units = 512
         translator = translator_to_test(vocab_size, n_units)
 
