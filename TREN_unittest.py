@@ -355,7 +355,7 @@ def test_decoder(decoder_to_test, CrossAttention):
             t.got = decoder.output_layer.activation.__name__
         cases.append(t)
 
-        vocab_size = 10000
+        vocab_size = 12000
         n_units = 512
         decoder = decoder_to_test(vocab_size, n_units)
 
