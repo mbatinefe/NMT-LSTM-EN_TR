@@ -85,6 +85,7 @@ VOCAB_SIZE = 12000
 UNITS = 256 # The number of units in the LSTM layers (the same number will be used for all LSTM layers)
 
 ################ ENCODER ################
+
 # Embedding: Define the appropriate input_dim and output_dim and let it know that you are using '0' as padding,
 ## It can be done by using the appropriate value for the mask_zero parameter.
 
@@ -132,13 +133,81 @@ class Encoder(tf.keras.layers.Layer):
         return x
 
 # Lets test the encoder
-# Create an instance of your class
+# Create an instance of  class
 encoder = Encoder(VOCAB_SIZE, UNITS)
 
-# Pass a batch of sentences to translate from english to portuguese
+# Pass a batch of sentences to translate from english to turkish
 encoder_output = encoder(to_translate)
 
 print(f'Tensor of sentences in english has shape: {to_translate.shape}\n')
 print(f'Encoder output has shape: {encoder_output.shape}')
 
 TREN_unittest.test_encoder(Encoder)
+
+################ CROSS ATTENTION ################
+# MultiHeadAttention: Well define key dimension (size of the key and query tensors).
+# We also need to set the number of heads to 1 since we use it for attention between two tensors (not multiple)
+
+# We add will add layer for the shift to right translation since we do cross attention on decoder side.
+# Layer normalization also will be performed for better stability of network.
+
+class CrossAttention(tf.keras.layers.Layer):
+    def __init__(self, units):
+        """Initializes an instance of this class
+
+        Args:
+            units (int): Number of units in the LSTM layer
+        """
+        super().__init__()
+
+        self.mha = (
+            tf.keras.layers.MultiHeadAttention(
+                key_dim=units,
+                num_heads=1
+            )
+        )
+
+        self.layernorm = tf.keras.layers.LayerNormalization()
+        self.add = tf.keras.layers.Add()
+
+    def call(self, context, target):
+        """Forward pass of this layer
+
+        Args:
+            context (tf.Tensor): Encoded sentence to translate
+            target (tf.Tensor): The embedded shifted-to-the-right translation
+
+        Returns:
+            tf.Tensor: Cross attention between context and target
+        """
+
+        # Call the MH attention by passing in the query and value
+        # For this case the query should be the translation and the value the encoded sentence to translate
+        attn_output = self.mha(
+            query=target,
+            value=context
+        )
+
+        x = self.add([target, attn_output])
+        x = self.layernorm(x)
+        return x
+
+# Lets test the cross attention
+# Create an instance of class
+attention_layer = CrossAttention(UNITS)
+
+# The attention layer expects the embedded sr-translation and the context
+# The context (encoder_output) is already embedded so we dont need to do this for sr_translation:
+sr_translation_embed = tf.keras.layers.Embedding(VOCAB_SIZE, output_dim=UNITS, mask_zero=True)(sr_translation)
+
+# Compute the cross attention
+attention_result = attention_layer(encoder_output, sr_translation_embed)
+
+print(f'Tensor of contexts has shape: {encoder_output.shape}')
+print(f'Tensor of translations has shape: {sr_translation_embed.shape}')
+print(f'Tensor of attention scores has shape: {attention_result.shape}')
+
+TREN_unittest.test_encoder(CrossAttention)
+
+################ DECODER ################
+# Embeedding:
