@@ -7,7 +7,7 @@ from collections import Counter
 from utils import (sentences, train_data, val_data, english_vectorizer, turkish_vectorizer,
                    masked_loss, masked_acc, tokens_to_text)
 
-import unittest
+import TREN_unittest
 
 turkish_sentences, english_sentences = sentences
 
@@ -88,4 +88,57 @@ UNITS = 256 # The number of units in the LSTM layers (the same number will be us
 # Embedding: Define the appropriate input_dim and output_dim and let it know that you are using '0' as padding,
 ## It can be done by using the appropriate value for the mask_zero parameter.
 
-# Bidirectional LSTM:
+# Bidirectional LSTM: We will implement bidrectional behavior for RNN-like layers with TF. We need to define type of layer and its paramaters.\
+## In addition, we need to make sure we have appropriate number of units and LSTM returns full sequence not only last output.
+
+class Encoder(tf.keras.layers.Layer):
+    def __init__(self, vocab_size, units):
+        """Initializes an instance of this class
+
+        Args:
+            vocab_size (int): Size of the vocabulary
+            units (int): Number of units in the LSTM layer
+        """
+        super(Encoder, self).__init__()
+
+        self.embedding = tf.keras.layers.Embedding(
+            input_dim=vocab_size,
+            output_dim=units,
+            mask_zero=True
+        )
+
+        self.rnn = tf.keras.layers.Bidirectional(
+            merge_mode="sum",
+            layer=tf.keras.layers.LSTM(
+                units=units,
+                return_sequences=True
+            ),
+        )
+
+    def call(self, context):
+        """Forward pass of this layer
+
+        Args:
+            context (tf.Tensor): The sentence to translate
+
+        Returns:
+            tf.Tensor: Encoded sentence to translate
+        """
+        # Pass the context through the embedding layer
+        x = self.embedding(context)
+
+        # Pass the output of the embedding through the RNN
+        x = self.rnn(x)
+        return x
+
+# Lets test the encoder
+# Create an instance of your class
+encoder = Encoder(VOCAB_SIZE, UNITS)
+
+# Pass a batch of sentences to translate from english to portuguese
+encoder_output = encoder(to_translate)
+
+print(f'Tensor of sentences in english has shape: {to_translate.shape}\n')
+print(f'Encoder output has shape: {encoder_output.shape}')
+
+TREN_unittest.test_encoder(Encoder)
