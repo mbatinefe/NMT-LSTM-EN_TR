@@ -347,3 +347,55 @@ class Translator(tf.keras.Model):
 
         return logits
 
+# Lets check the translator
+
+# Create an instance of class
+translator = Translator(VOCAB_SIZE, UNITS)
+
+# Compute the logits for every word in the vocabulary
+logits = translator((to_translate, sr_translation))
+
+print(f'Tensor of sentences to translate has shape: {to_translate.shape}')
+print(f'Tensor of right-shifted translations has shape: {sr_translation.shape}')
+print(f'Tensor of logits has shape: {logits.shape}')
+
+TREN_unittest.test_translator(Translator, Encoder, Decoder)
+
+################ TRAINING ################
+
+def compile_and_train(model, epochs=40, steps_per_epoch=250):
+    model.compile(optimizer="adam", loss=masked_loss, metrics=[masked_acc, masked_loss])
+
+    history = model.fit(
+        train_data.repeat(),
+        epochs=epochs,
+        steps_per_epoch=steps_per_epoch,
+        validation_data=val_data,
+        validation_steps=50,
+        callbacks=[tf.keras.callbacks.EarlyStopping(patience=3)],
+    )
+
+    # Save the entire model to a TensorFlow SavedModel
+    model.save('EnTr_model', save_format='tf')
+
+    return model, history
+
+trained_translator, history = compile_and_train(translator)
+
+'''
+# Load the model
+loaded_model = tf.keras.models.load_model('EnTr_model')
+
+# Use the model for prediction
+# Assume `input_data` is your input for prediction
+predictions = loaded_model.predict(input_data)
+
+# Or use the model for evaluation
+# Assume `test_data` and `test_labels` are your test dataset
+evaluation = loaded_model.evaluate(test_data, test_labels)
+
+# Or continue training the model
+# Assume `train_data` and `train_labels` are your training dataset
+history = loaded_model.fit(train_data, train_labels, epochs=10)
+
+'''
