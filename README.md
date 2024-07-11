@@ -6,9 +6,9 @@ Implementing an encoder-decoder system with attention (Only RNN with LSTMs not t
 **Temperature:** 0.0
 **Original sentence:** Whats up bro
 
-**Translation:** gor kokteyl ayrlmak yapmadn uretildi parlyordu yontemler sevgililer yapmamn yapmamn oldugunuz oldugunuz oldugunuz oldugunuz yaygara yaygara koymayn yaygara sarkyla genis yaygara genis yaygara oynuyorsunuz duyabiliyor edilir bari ayrldgn leke cekicidir ediyorlard ediyorlard sallama birden birden yelkenli planmz arabanz ozetleyelim verecegine orijinali duymustum temizleyiciye temizleyiciye raket harcar harcar kanser soydu goruyorum
+**Translation: ** gor kokteyl ayrlmak yapmadn uretildi parlyordu yontemler sevgililer yapmamn yapmamn oldugunuz oldugunuz oldugunuz oldugunuz yaygara yaygara koymayn yaygara sarkyla genis yaygara genis yaygara oynuyorsunuz duyabiliyor edilir bari ayrldgn leke cekicidir ediyorlard ediyorlard sallama birden birden yelkenli planmz arabanz ozetleyelim verecegine orijinali duymustum temizleyiciye temizleyiciye raket harcar harcar kanser soydu goruyorum
 
-**Translation tokens:** [[ 2394  6593  1634  8949  9492 11732  8472  2649  8934  8934  4237  4237   4237  4237  3084  3084  3373  3084 11153  3540  3084  3540  3084 11830   4832  2928  7964  5098  3358  7716  7411  7411 11235  3705  3705  5332   6086  3773 11808  9227 11939  7432  9923  9923  4160  7021  7021  1746   2630  2875]]
+**Translation tokens:**[[ 2394  6593  1634  8949  9492 11732  8472  2649  8934  8934  4237  4237   4237  4237  3084  3084  3373  3084 11153  3540  3084  3540  3084 11830   4832  2928  7964  5098  3358  7716  7411  7411 11235  3705  3705  5332   6086  3773 11808  9227 11939  7432  9923  9923  4160  7021  7021  1746   2630  2875]]
 **Logit:** -9.362
 ===============================================================================
 **Temperature:** 0.7
