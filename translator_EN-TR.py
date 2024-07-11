@@ -4,6 +4,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 import tensorflow as tf
 from collections import Counter
+from tensorflow.keras.models import load_model
 from utils import (sentences, train_data, val_data, english_vectorizer, turkish_vectorizer,
                    masked_loss, masked_acc, tokens_to_text)
 
@@ -346,16 +347,3 @@ class Translator(tf.keras.Model):
 
         return logits
 
-# Lets check the translator
-
-# Create an instance of class
-translator = Translator(VOCAB_SIZE, UNITS)
-
-# Compute the logits for every word in the vocabulary
-logits = translator((to_translate, sr_translation))
-
-print(f'Tensor of sentences to translate has shape: {to_translate.shape}')
-print(f'Tensor of right-shifted translations has shape: {sr_translation.shape}')
-print(f'Tensor of logits has shape: {logits.shape}')
-
-TREN_unittest.test_translator(Translator, Encoder, Decoder)
