@@ -53,7 +53,7 @@ Tensor of logits has shape: (64, 15, 12000)
 
 Model: "translator"
 _________________________________________________________________
- Layer (type)                Output Shape              Param #   
+ Layer (type)                Output Shape              Param    
 =================================================================
  encoder_11 (Encoder)        multiple                  4122624   
                                                                  
