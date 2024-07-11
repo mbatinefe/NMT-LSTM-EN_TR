@@ -435,7 +435,7 @@ def generate_next_token(decoder, context, next_token, done, state, temperature=0
 # Process sentence to translate and encode
 
 # Input sentence to be translated
-eng_sentence = "I am a student"
+eng_sentence = "I student"
 
 # Conver to tensor
 texts = tf.convert_to_tensor(eng_sentence)[tf.newaxis]
@@ -458,4 +458,101 @@ done = False
 next_token, logit, state, done = generate_next_token(trained_translator.decoder, context, next_token, done, state, temperature=0.5)
 print(f"Next token: {next_token}\nLogit: {logit:.4f}\nDone? {done}")
 
+################ TRANSLATE ################
+def translate(model, text, max_length=50, temperature=0.0):
+    """Translate a given sentence from English to Turkish
 
+    Args:
+        model (tf.keras.Model): The trained translator
+        text (string): The sentence to translate
+        max_length (int, optional): The maximum length of the translation. Defaults to 50.
+        temperature (float, optional): The temperature that controls the randomness of the predicted tokens. Defaults to 0.0.
+
+    Returns:
+        tuple(str, np.float, tf.Tensor): The translation, logit that predicted <EOS> token and the tokenized translation
+    """
+    # Lists to save tokens and logits
+    tokens, logits = [], []
+
+    # PROCESS THE SENTENCE TO TRANSLATE
+
+    # Convert the original string into a tensor
+    text = tf.convert_to_tensor(text)[tf.newaxis]
+
+    # Vectorize the text using the correct vectorizer
+    context = english_vectorizer(text).to_tensor()
+
+    # Get the encoded context (pass the context through the encoder)
+    # Hint: Remember you can get the encoder by using model.encoder
+    context = model.encoder(context)
+
+    # INITIAL STATE OF THE DECODER
+
+    # First token should be SOS token with shape (1,1)
+    next_token = tf.fill((1, 1), sos_id)
+
+    # Initial hidden and cell states should be tensors of zeros with shape (1, UNITS)
+    state = [tf.zeros((1, UNITS)), tf.zeros((1, UNITS))]
+
+    # You are done when you draw a EOS token as next token (initial state is False)
+    done = False
+
+    # Iterate for max_length iterations
+    for _ in range(max_length):
+
+        # Generate the next token
+        next_token, logit, state, done = generate_next_token(
+            decoder=decoder,
+            context=context,
+            next_token=next_token,
+            done=done,
+            state=state,
+            temperature=temperature
+        )
+
+        # If done then break out of the loop
+        if done:
+            break
+
+        # Add next_token to the list of tokens
+        tokens.append(next_token)
+
+        # Add logit to the list of logits
+        logits.append(logit)
+
+    # Concatenate all tokens into a tensor
+    tokens = tf.concat(tokens, axis=-1)
+
+    # Convert the translated tokens into text
+    translation = tf.squeeze(tokens_to_text(tokens, id_to_word))
+    translation = translation.numpy().decode()
+
+    return translation, logits[-1], tokens
+
+# Translate the sentence
+
+temp = 0.0
+original_sentence = "I student"
+
+translation, logit, tokens = translate(trained_translator, original_sentence, temperature=temp)
+print(f"Temperature: {temp}\n\nOriginal sentence: {original_sentence}\nTranslation: {translation}\nTranslation tokens:{tokens}\nLogit: {logit:.3f}")
+
+temp = 0.3
+original_sentence = "I student"
+
+translation, logit, tokens = translate(trained_translator, original_sentence, temperature=temp)
+print(f"Temperature: {temp}\n\nOriginal sentence: {original_sentence}\nTranslation: {translation}\nTranslation tokens:{tokens}\nLogit: {logit:.3f}")
+
+temp = 0.7
+original_sentence = "I student"
+
+translation, logit, tokens = translate(trained_translator, original_sentence, temperature=temp)
+print(f"Temperature: {temp}\n\nOriginal sentence: {original_sentence}\nTranslation: {translation}\nTranslation tokens:{tokens}\nLogit: {logit:.3f}")
+
+temp = 1.0
+original_sentence = "I student"
+
+translation, logit, tokens = translate(trained_translator, original_sentence, temperature=temp)
+print(f"Temperature: {temp}\n\nOriginal sentence: {original_sentence}\nTranslation: {translation}\nTranslation tokens:{tokens}\nLogit: {logit:.3f}")
+
+TREN_unittest.test_translate(translate, trained_translator)
