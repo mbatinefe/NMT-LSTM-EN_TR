@@ -376,26 +376,86 @@ def compile_and_train(model, epochs=40, steps_per_epoch=250):
     )
 
     # Save the entire model to a TensorFlow SavedModel
-    model.save('EnTr_model', save_format='tf')
+    model.save('entire-model', save_format='tf')
 
     return model, history
 
+# Train the model
 trained_translator, history = compile_and_train(translator)
 
-'''
-# Load the model
-loaded_model = tf.keras.models.load_model('EnTr_model')
+trained_translator.summary()
 
-# Use the model for prediction
-# Assume `input_data` is your input for prediction
-predictions = loaded_model.predict(input_data)
+################ USING THE MODEL FOR INFERENCE ################
 
-# Or use the model for evaluation
-# Assume `test_data` and `test_labels` are your test dataset
-evaluation = loaded_model.evaluate(test_data, test_labels)
+def generate_next_token(decoder, context, next_token, done, state, temperature=0.0):
+    """Generates the next token in the sequence
 
-# Or continue training the model
-# Assume `train_data` and `train_labels` are your training dataset
-history = loaded_model.fit(train_data, train_labels, epochs=10)
+    Args:
+        decoder (Decoder): The decoder
+        context (tf.Tensor): Encoded sentence to translate
+        next_token (tf.Tensor): The predicted next token
+        done (bool): True if the translation is complete
+        state (list[tf.Tensor, tf.Tensor]): Hidden states of the pre-attention LSTM layer
+        temperature (float, optional): The temperature that controls the randomness of the predicted tokens. Defaults to 0.0.
 
-'''
+    Returns:
+        tuple(tf.Tensor, np.float, list[tf.Tensor, tf.Tensor], bool): The next token, log prob of said token, hidden state of LSTM and if translation is done
+    """
+    # Get the logits and state from the decoder
+    logits, state = decoder(context, next_token, state=state, return_state=True)
+
+    # Trim the intermediate dimension
+    logits = logits[:, -1, :]
+
+    # If temp is 0 then next_token is the argmax of logits
+    if temperature == 0.0:
+        next_token = tf.argmax(logits, axis=-1)
+
+    # If temp is not 0 then next_token is sampled out of logits
+    else:
+        logits = logits / temperature
+        next_token = tf.random.categorical(logits, num_samples=1)
+
+    # Trim dimensions of size 1
+    logits = tf.squeeze(logits)
+    next_token = tf.squeeze(next_token)
+
+    # Get the logit of the selected next_token
+    logit = logits[next_token].numpy()
+
+    # Reshape to (1,1) since this is the expected shape for text encoded as TF tensors
+    next_token = tf.reshape(next_token, shape=(1, 1))
+
+    # If next_token is End-of-Sentence token its done
+    if next_token == eos_id:
+        done = True
+
+    return next_token, logit, state, done
+
+# Process sentence to translate and encode
+
+# Input sentence to be translated
+eng_sentence = "I am a student"
+
+# Conver to tensor
+texts = tf.convert_to_tensor(eng_sentence)[tf.newaxis]
+
+# Vectorize it and pass it through the encoder
+context = english_vectorizer(texts).to_tensor()
+context = encoder(context)
+
+# Set state of decoder
+# Next token is SOS - new start
+next_token = tf.fill((1, 1), sos_id)
+
+# Hidden and cell states, we will fill with random uniform samples
+state = [tf.random.uniform((1, UNITS)), tf.random.uniform((1, UNITS))]
+
+# Done flag until next token is EOS
+done = False
+
+# Generate next token
+next_token, logit, state, done = generate_next_token(trained_translator.decoder, context, next_token, done, state, temperature=0.5)
+print(f"Next token: {next_token}\nLogit: {logit:.4f}\nDone? {done}")
+
+
